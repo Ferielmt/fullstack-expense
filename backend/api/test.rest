@@ -2,7 +2,7 @@ POST http://localhost:8000/api/transactions/
 Content-Type: application/json
 
 {
-  "text": "Salaire Juin",
+  "text": "Salaire Mars",
   "amount": -2000.00
 }
 ###
