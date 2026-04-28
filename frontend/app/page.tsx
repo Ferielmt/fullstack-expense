@@ -18,62 +18,72 @@ export default function Home() {
   const [amount, setAmount] = useState<number | "">("");
   const [loading, setLoading] = useState(false)
 
-  const getTransactions = async () => {
-    try {
-      const res = await api.get<Transaction[]>("transactions/")
-      setTransactions(res.data)
-      toast.success("Transactions chargées")
-    } catch (error) {
-      console.error("Erreur chargement transactions", error);
-      toast.error("Erreur chargement transactions")
-    }
+const getTransactions = async () => {
+  try {
+    const data = await api("transactions/all/");
+    setTransactions(data);
+    toast.success("Transactions chargées");
+  } catch (error) {
+    console.error("Erreur chargement transactions", error);
+    toast.error("Erreur chargement transactions");
+  }
+};
+
+const deleteTransaction = async (id: string) => {
+  try {
+    await api(`transactions/${id}/`, {
+      method: "DELETE",
+    });
+
+    getTransactions();
+    toast.success("Transaction supprimée avec succès");
+  } catch (error) {
+    console.error("Erreur suppression transaction", error);
+    toast.error("Erreur suppression transaction");
+  }
+};
+
+const addTransaction = async () => {
+  if (!text || amount === "" || isNaN(Number(amount))) {
+    toast.error("Merci de remplir texte et montant valides");
+    return;
   }
 
+  setLoading(true);
 
-  const deleteTransaction = async (id: string) => {
-    try {
-      await api.delete(`transactions/${id}/`)
-      getTransactions()
-      toast.success("Transaction supprimée avec succès")
-    } catch (error) {
-      console.error("Erreur suppression transaction", error);
-      toast.error("Erreur suppression transaction")
-    }
-  }
-
-
-  const addTransaction = async () => {
-    if (!text || amount == "" || isNaN(Number(amount))) {
-      toast.error("Merci de remplir texte et montant valides")
-      return
-    }
-    setLoading(true)
-
-    try {
-      const res = await api.post<Transaction>(`transactions/`, {
+  try {
+    await api("transactions/all/", {
+      method: "POST",
+      body: JSON.stringify({
         text,
-        amount: Number(amount)
-      })
-      getTransactions()
-      const modal = document.getElementById('my_modal_3') as HTMLDialogElement
-      if (modal) {
-        modal.close()
-      }
+        amount: Number(amount),
+      }),
+    });
 
-      toast.success("Transaction ajoutée avec succès")
-      setText("")
-      setAmount("")
-    } catch (error) {
-      console.error("Erreur ajout transaction", error);
-      toast.error("Erreur ajout transaction")
-    } finally {
-      setLoading(false)
-    }
+    getTransactions();
+
+    const modal = document.getElementById("my_modal_3") as HTMLDialogElement;
+    modal?.close();
+
+    toast.success("Transaction ajoutée avec succès");
+
+    setText("");
+    setAmount("");
+  } catch (error) {
+    console.error("Erreur ajout transaction", error);
+    toast.error("Erreur ajout transaction");
+  } finally {
+    setLoading(false);
   }
+};
 
-  useEffect(() => {
-    getTransactions()
-  }, []);
+useEffect(() => {
+  const fetchData = async () => {
+    await getTransactions();
+  };
+
+  fetchData();
+}, []);
 
   const amounts = transactions.map((t) => Number(t.amount) || 0)
   const balance = amounts.reduce((acc, item) => acc + item, 0) || 0
